@@ -1,11 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { Shield, Play, Pause, Volume2, VolumeX, ArrowRight, Eye, Cpu, FileText, Layers, Lock, Award, CheckCircle, Zap, Activity } from 'lucide-react';
+import { Shield, Play, Pause, Volume2, VolumeX, ArrowRight, Lock, Activity, Eye, Zap } from 'lucide-react';
+import landingVideo from '../assets/landing_video.mp4';
 
 export default function LandingPage({ onProceedToLogin }) {
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [isMuted, setIsMuted] = useState(true);
-  const [videoLoaded, setVideoLoaded] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -26,198 +26,198 @@ export default function LandingPage({ onProceedToLogin }) {
   };
 
   return (
-    <div className="landing-page-container">
-      {/* Top Header Navbar */}
-      <header className="landing-header">
-        <div className="landing-brand">
-          <div className="landing-logo">
-            <Shield className="w-6 h-6 text-cyan-400" />
+    <div style={{
+      width: '100vw',
+      minHeight: '100vh',
+      backgroundColor: '#070a10',
+      color: '#e2e8f0',
+      display: 'flex',
+      flexDirection: 'column',
+      fontFamily: "'Inter', sans-serif",
+      overflowX: 'hidden'
+    }}>
+      {/* Header */}
+      <header style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '16px 40px',
+        backgroundColor: 'rgba(11, 15, 25, 0.95)',
+        borderBottom: '1px solid #172338',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '10px',
+            background: 'linear-gradient(135deg, rgba(0, 242, 255, 0.25), rgba(41, 121, 255, 0.3))',
+            border: '1px solid rgba(0, 242, 255, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#00f2ff'
+          }}>
+            <Shield size={22} />
           </div>
           <div>
-            <h1 className="landing-title">DRISHTI AI</h1>
-            <span className="landing-subtitle">FORENSIC EXAMINATION PLATFORM</span>
+            <h1 style={{ fontSize: '18px', fontWeight: '800', color: '#fff', margin: 0, letterSpacing: '0.5px' }}>
+              DRISHTI AI
+            </h1>
+            <span style={{ fontSize: '10px', fontWeight: '700', color: '#00f2ff', letterSpacing: '1px' }}>
+              AI EXAMINATION FORENSICS PLATFORM
+            </span>
           </div>
         </div>
 
-        <nav className="landing-nav">
-          <a href="#video-showcase">Video Demo</a>
-          <a href="#features">Key Features</a>
-          <a href="#architecture">Architecture</a>
-          <button className="landing-login-btn" onClick={onProceedToLogin}>
-            <Lock size={15} />
-            <span>Login to Console</span>
-          </button>
-        </nav>
+        <button
+          onClick={onProceedToLogin}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: 'linear-gradient(135deg, #00f2ff, #0088ff)',
+            color: '#050b14',
+            border: 'none',
+            padding: '10px 24px',
+            borderRadius: '8px',
+            fontWeight: '700',
+            fontSize: '13px',
+            cursor: 'pointer',
+            boxShadow: '0 0 20px rgba(0, 242, 255, 0.3)',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <Lock size={15} />
+          <span>Login / Sign In</span>
+        </button>
       </header>
 
-      {/* Main Hero Section */}
-      <section className="landing-hero">
-        <div className="hero-badge">
+      {/* Main Video Showcase Hero */}
+      <main style={{
+        flex: 1,
+        maxWidth: '1200px',
+        width: '100%',
+        margin: '0 auto',
+        padding: '40px 24px 60px 24px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center'
+      }}>
+        {/* Title Tag */}
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '6px 16px',
+          borderRadius: '20px',
+          background: 'rgba(0, 242, 255, 0.08)',
+          border: '1px solid rgba(0, 242, 255, 0.4)',
+          color: '#00f2ff',
+          fontSize: '11px',
+          fontWeight: '700',
+          letterSpacing: '0.5px',
+          marginBottom: '16px'
+        }}>
           <Zap size={14} />
-          <span>OFFLINE CCTV VIDEO SEGMENTATION & ANOMALY DETECTION</span>
+          <span>SURVEILLANCE & ANOMALY DETECTION VIDEO SHOWCASE</span>
         </div>
 
-        <h1 className="hero-headline">
-          Autonomous AI-Powered <br />
-          <span className="hero-gradient-text">Examination Video Forensics</span>
-        </h1>
+        <h2 style={{
+          fontSize: '32px',
+          fontWeight: '900',
+          color: '#fff',
+          textAlign: 'center',
+          marginBottom: '10px',
+          lineHeight: '1.2'
+        }}>
+          Examination Hall Video Pipeline Demonstration
+        </h2>
 
-        <p className="hero-description">
-          Convert hours of examination CCTV footage into ranked, explainable, cross-camera evidence capsules. 
-          Driven by physical seating maps, motion-gated YOLOv8 detection, and adaptive behavioral baselines.
+        <p style={{
+          fontSize: '14px',
+          color: '#8492a6',
+          textAlign: 'center',
+          maxWidth: '650px',
+          marginBottom: '28px'
+        }}>
+          Watch the live CCTV examination video footage analyzed through multi-pass seating calibration, motion gating, and YOLOv8 object detection.
         </p>
 
-        <div className="hero-cta-group">
-          <button className="hero-primary-btn" onClick={onProceedToLogin}>
-            <span>Access Forensic Console</span>
-            <ArrowRight size={18} />
-          </button>
-          <a href="#video-showcase" className="hero-secondary-btn">
-            <Play size={16} />
-            <span>Watch Live Demonstration</span>
-          </a>
-        </div>
-      </section>
-
-      {/* Video Showcase Section */}
-      <section id="video-showcase" className="video-showcase-section">
-        <div className="section-header">
-          <div className="badge-tag">LIVE DEMONSTRATION</div>
-          <h2>Examination Surveillance Analysis Showcase</h2>
-          <p>Real-time motion estimation, spatial desk grid calibration, and anomalous activity detection.</p>
-        </div>
-
-        <div className="video-player-card">
-          <div className="video-status-bar">
-            <div className="status-indicator">
-              <span className="pulse-dot"></span>
-              <span>FORENSIC PIPELINE: ACTIVE STREAM</span>
+        {/* Video Frame Player */}
+        <div style={{
+          width: '100%',
+          maxWidth: '1000px',
+          backgroundColor: '#101726',
+          border: '1px solid rgba(0, 242, 255, 0.4)',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          boxShadow: '0 0 50px rgba(0, 242, 255, 0.2)'
+        }}>
+          {/* Status Bar above Video */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '12px 20px',
+            backgroundColor: '#0d121f',
+            borderBottom: '1px solid #172338'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#00e676', fontSize: '11px', fontWeight: '700' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#00e676', boxShadow: '0 0 8px #00e676' }} />
+              <span>CCTV VIDEO FEED — ACTIVE STAGE 1.5 CALIBRATION</span>
             </div>
-            <div className="video-meta-tags">
-              <span className="meta-pill">YOLOv8 Custom Trained</span>
-              <span className="meta-pill">14 Spatial Desks Calibrated</span>
-              <span className="meta-pill">30 FPS Ingestion</span>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <span style={{ fontSize: '10px', background: 'rgba(0,242,255,0.1)', border: '1px solid rgba(0,242,255,0.3)', color: '#00f2ff', padding: '3px 8px', borderRadius: '4px' }}>
+                Full HD 1080p
+              </span>
+              <span style={{ fontSize: '10px', background: 'rgba(0,242,255,0.1)', border: '1px solid rgba(0,242,255,0.3)', color: '#00f2ff', padding: '3px 8px', borderRadius: '4px' }}>
+                YOLOv8 Active
+              </span>
             </div>
           </div>
 
-          <div className="video-container">
+          {/* Actual Video Element */}
+          <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', backgroundColor: '#000' }}>
             <video
               ref={videoRef}
-              src="/landing_video.mp4"
+              src={landingVideo}
               autoPlay
               loop
-              muted={isMuted}
+              controls
               playsInline
-              onLoadedData={() => setVideoLoaded(true)}
-              className="main-landing-video"
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
             />
-            
-            {!videoLoaded && (
-              <div className="video-loader-overlay">
-                <Activity className="animate-spin text-cyan-400" size={36} />
-                <span>Loading Video Stream...</span>
-              </div>
-            )}
-
-            <div className="video-overlay-controls">
-              <button className="video-ctrl-btn" onClick={togglePlay} title={isPlaying ? "Pause" : "Play"}>
-                {isPlaying ? <Pause size={18} /> : <Play size={18} />}
-              </button>
-              <button className="video-ctrl-btn" onClick={toggleMute} title={isMuted ? "Unmute" : "Mute"}>
-                {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-              </button>
-              <div className="video-tagline">
-                <Eye size={16} className="text-cyan-400" />
-                <span>CCTV Examination Room Surveillance Feed — Stage 1.5 Calibration Overlay</span>
-              </div>
-            </div>
           </div>
         </div>
-      </section>
 
-      {/* Features Grid Section */}
-      <section id="features" className="landing-features-section">
-        <div className="section-header">
-          <div className="badge-tag">PLATFORM CAPABILITIES</div>
-          <h2>Engineered for Uncompromising Accuracy</h2>
-          <p>Strictly investigation-support tool empowering disciplinary committees with verifiable evidence.</p>
-        </div>
-
-        <div className="features-grid">
-          <div className="feature-card">
-            <div className="feature-icon bg-cyan">
-              <Cpu size={24} />
-            </div>
-            <h3>Adaptive Behavior Baseline</h3>
-            <p>Learns normal desk posture during calibration and flags sustained deviations using adaptive Z-scores.</p>
-          </div>
-
-          <div className="feature-card">
-            <div className="feature-icon bg-blue">
-              <Layers size={24} />
-            </div>
-            <h3>Multi-Pass Zone Calibration</h3>
-            <p>Maps physical exam desk polygons and physical seating locations automatically from surveillance feeds.</p>
-          </div>
-
-          <div className="feature-card">
-            <div className="feature-icon bg-purple">
-              <Eye size={24} />
-            </div>
-            <h3>YOLOv8 Custom Object Model</h3>
-            <p>Detects prohibited items including mobile phones, chits, unauthorized desk peekings, and hand gestures.</p>
-          </div>
-
-          <div className="feature-card">
-            <div className="feature-icon bg-red">
-              <Shield size={24} />
-            </div>
-            <h3>Cross-Camera Incident Fusion</h3>
-            <p>Correlates multi-camera viewpoints into unified incident timelines, eliminating duplicate alerts.</p>
-          </div>
-
-          <div className="feature-card">
-            <div className="feature-icon bg-amber">
-              <FileText size={24} />
-            </div>
-            <h3>Forensic Evidence Capsules</h3>
-            <p>Generates self-contained evidence capsules with pre/during/post event snapshots and formal PDF exports.</p>
-          </div>
-
-          <div className="feature-card">
-            <div className="feature-icon bg-green">
-              <Award size={24} />
-            </div>
-            <h3>Explainable Risk Scoring</h3>
-            <p>Provides transparent 0-100 mathematical factor breakdown for every flagged event.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Bottom CTA Banner */}
-      <section className="landing-cta-banner">
-        <div className="cta-content">
-          <h2>Ready to Begin Forensic Review?</h2>
-          <p>Access the Drishti AI Forensic Console dashboard to manage incidents, search video logs, and export evidence.</p>
-          <button className="hero-primary-btn" onClick={onProceedToLogin}>
-            <span>Sign In to Forensic Console</span>
-            <ArrowRight size={18} />
-          </button>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="landing-footer">
-        <div className="footer-left">
-          <Shield size={18} className="text-cyan-400" />
-          <span>DRISHTI AI — Hackathon Solution for Examination CCTV Video Forensics</span>
-        </div>
-        <div className="footer-right">
-          <span>Version 1.0.0</span>
-          <span>•</span>
-          <span>FastAPI + Vite React</span>
-        </div>
-      </footer>
+        {/* Action Button */}
+        <button
+          onClick={onProceedToLogin}
+          style={{
+            marginTop: '36px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            background: 'linear-gradient(135deg, #00f2ff, #0077ff)',
+            color: '#030812',
+            border: 'none',
+            padding: '16px 40px',
+            borderRadius: '10px',
+            fontWeight: '800',
+            fontSize: '16px',
+            cursor: 'pointer',
+            boxShadow: '0 0 35px rgba(0, 242, 255, 0.45)',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <span>Proceed to Firebase Login & Console</span>
+          <ArrowRight size={20} />
+        </button>
+      </main>
     </div>
   );
 }

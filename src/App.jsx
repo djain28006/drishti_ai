@@ -141,8 +141,6 @@ export default function App() {
             setSearchQuery(query);
             setCurrentPage('search');
           }}
-          user={user}
-          onLogout={() => setViewMode('landing')}
         />
 
         <main style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
