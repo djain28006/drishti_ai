@@ -143,7 +143,7 @@ export default function App() {
           }}
         />
 
-        <main style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <main style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', display: 'flex', flexDirection: 'column' }}>
           {currentPage === 'artifacts' && (
             <ArtifactsAnalyticsPage />
           )}
