@@ -3,6 +3,9 @@ import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
 import ModalCapsule from './components/ModalCapsule';
 
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+
 import ArtifactsAnalyticsPage from './pages/ArtifactsAnalyticsPage';
 import SpatialPage from './pages/SpatialPage';
 import VideoForensicsPage from './pages/VideoForensicsPage';
@@ -23,6 +26,8 @@ import './styles/theme.css';
 const API_BASE = window.location.origin;
 
 export default function App() {
+  const [viewMode, setViewMode] = useState('landing'); // 'landing' | 'login' | 'dashboard'
+  const [user, setUser] = useState(null);
   const [currentPage, setCurrentPage] = useState('artifacts');
   const [currentData, setCurrentData] = useState({
     video_name: 'Examination_Surveillance.mp4',
@@ -100,6 +105,26 @@ export default function App() {
     i => i.risk_level === 'HIGH' || i.risk_level === 'CRITICAL'
   ).length;
 
+  if (viewMode === 'landing') {
+    return (
+      <LandingPage 
+        onProceedToLogin={() => setViewMode('login')} 
+      />
+    );
+  }
+
+  if (viewMode === 'login') {
+    return (
+      <LoginPage 
+        onLoginSuccess={(userData) => {
+          setUser(userData);
+          setViewMode('dashboard');
+        }}
+        onBackToLanding={() => setViewMode('landing')}
+      />
+    );
+  }
+
   return (
     <div className="app-container">
       <Sidebar 
@@ -116,6 +141,8 @@ export default function App() {
             setSearchQuery(query);
             setCurrentPage('search');
           }}
+          user={user}
+          onLogout={() => setViewMode('landing')}
         />
 
         <main style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -199,8 +226,7 @@ export default function App() {
       {activeModalIncident && (
         <ModalCapsule 
           incident={activeModalIncident} 
-          onClose={() => setActiveModalIncident(null)}
-          apiBase={API_BASE}
+          onClose={() => setActiveModalIncident(null)} 
         />
       )}
     </div>

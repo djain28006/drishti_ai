@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Bell, Settings, HelpCircle, User, AlertTriangle, CheckCircle } from 'lucide-react';
 
-export default function Topbar({ currentPage, setCurrentPage, onSearch }) {
+export default function Topbar({ currentPage, setCurrentPage, onSearch, user, onLogout }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -12,6 +12,9 @@ export default function Topbar({ currentPage, setCurrentPage, onSearch }) {
       if (onSearch) onSearch(searchQuery);
     }
   };
+
+  const usernameDisplay = user?.username || 'proctor_admin';
+  const roleDisplay = user?.role || 'Chief Forensic Analyst';
 
   return (
     <header className="topbar">
@@ -110,7 +113,7 @@ export default function Topbar({ currentPage, setCurrentPage, onSearch }) {
         <div style={{ position: 'relative' }}>
           <div 
             className="user-avatar" 
-            title="Unit 04 Lead Investigator" 
+            title={usernameDisplay} 
             style={{ cursor: 'pointer' }}
             onClick={() => {
               setShowProfile(!showProfile);
@@ -133,11 +136,27 @@ export default function Topbar({ currentPage, setCurrentPage, onSearch }) {
               boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
               zIndex: 100
             }}>
-              <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff' }}>Unit 04 Lead Investigator</div>
-              <div style={{ fontSize: '11px', color: 'var(--accent-cyan)', fontFamily: 'var(--font-mono)', marginBottom: '8px' }}>Role: Chief Forensic Analyst</div>
-              <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', borderTop: '1px solid var(--border-color)', paddingTop: '8px' }}>
-                Vault Clearance Level 5 • Active Ops
-              </div>
+              <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff' }}>{usernameDisplay}</div>
+              <div style={{ fontSize: '11px', color: 'var(--accent-cyan)', fontFamily: 'var(--font-mono)', marginBottom: '12px' }}>Role: {roleDisplay}</div>
+              
+              {onLogout && (
+                <button
+                  onClick={onLogout}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    background: 'rgba(255, 59, 92, 0.15)',
+                    border: '1px solid rgba(255, 59, 92, 0.4)',
+                    color: 'var(--status-critical)',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Log Out to Landing Page
+                </button>
+              )}
             </div>
           )}
         </div>
