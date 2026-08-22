@@ -1,0 +1,174 @@
+# Drishti AI - Examination Video Forensics Platform Configuration
+
+debug:
+  enabled: true
+  save_images: true
+  show_images: false
+  output_dir: outputs/debug/
+  save_every_n_frames: 30   # Default: Sampled debug writes every 30 frames to eliminate I/O bottleneck
+  
+video:
+  input_path: "test2.mp4"
+  camera_id: "CAM-01"
+  skip_initial_frames: 0
+  frame_sample_rate: 1
+  max_consecutive_corrupt_frames: 10
+  sampling:
+    # ── Sampling Mode Tradeoffs ──
+    # target_fps: 4 (DEFAULT / STANDARD FORENSICS) ← benchmarked best tradeoff
+    #   Achieves 93% of 5 FPS detection quality at 40% faster runtime.
+    #   Processes a 2-hour exam video in ~55-60 minutes on pure CPU (offline forensic review).
+    # target_fps: 5 (HIGH-FIDELITY MODE)
+    #   Full baseline quality. Use when brief hand-off gestures (supplement-passing) must be captured.
+    #   ~70 min for 2-hour video on CPU.
+    # target_fps: 1 (RAPID SCREENING PREVIEW MODE)
+    #   ~14 min for 2 hours on CPU. Catches only prolonged events (>2s). Miss rate is high for brief actions.
+    target_fps: 4
+
+preprocessing:
+  resize_width: 640
+  resize_height: 480
+  clahe_clip_limit: 2.0
+  clahe_tile_grid_size: [8, 8]
+  brightness_jump_threshold: 50.0
+  enable_stabilization: false  # Default: false for fixed-mount ceiling CCTV. Enable only for handheld cameras.
+
+zone_calibration:
+  calibration_window_percent: 0.20
+  calibration_window_frames: 100
+  calibration_confidence_threshold: 0.08
+  centroid_stability_threshold: 35.0
+  padding_ratio: 0.08
+  padding_margin: 6
+  expected_seat_count: 14
+  zone_map_path: "outputs/zones/zone_map.json"
+  preview_path: "outputs/zones/zone_calibration_preview.jpg"
+  manual_override: false
+  manual_zones: []
+  enable_upscale_pass: false   # Default: false (SAHI 192px achieves 100% desk coverage at 4x speedup)
+  tile_rows: 2
+  tile_cols: 2
+  upscale_factor: 2.0
+  max_calib_sample_frames: 10
+  min_frame_fraction: 0.20
+
+motion_detection:
+  algorithm: mog2        # mog2 | knn | optical_flow
+  mog2:
+    # history: fixed frame-count for MOG2 background model. Intentionally NOT scaled with FPS.
+    # Tested: time-based scaling (history_seconds * target_fps) made Stage 2A WORSE — shorter
+    # histories cause MOG2 to adapt faster and absorb slow cheating behaviors (gradual lean,
+    # prolonged peek) as "new background", reducing triggers at all FPS values. Fixed 500 is correct.
+    history: 500
+    var_threshold: 16
+    detect_shadows: true
+  morphology:
+    kernel_size: 5
+    iterations: 2
+  min_motion_area: 80
+  warmup_frames: 15
+  global_motion_suppression:
+    enabled: true
+    threshold_percentage: 70
+
+object_detection:
+  model_path: "yolov8n.pt"
+  confidence_threshold: 0.08
+  device: "cuda"              # cuda | cpu | auto
+  classes_of_interest: ["person", "phone", "cell phone", "mobile phone", "chit", "hand", "peeking", "supplement-passing", "laptop", "book"]
+  sahi:
+    enabled: true
+    slice_height: 512
+    slice_width: 512
+    overlap_height_ratio: 0.2
+    overlap_width_ratio: 0.2
+    postprocess_type: "NMS"
+    postprocess_match_threshold: 0.5
+
+tracking:
+  max_age: 15
+  iou_threshold: 0.2
+  preserve_frames: 5
+  zone_change_frames: 3
+  boundary_tolerance_px: 20
+
+# USP 1: Adaptive Normal-Behavior Baseline
+baseline:
+  duration_minutes: 15
+  sensitivity: 0.65
+  anomaly_threshold: 0.25
+  min_event_duration: 0.4
+  history_window_frames: 120
+
+# USP 3: Temporal Risk Scoring Engine
+risk_engine:
+  thresholds:
+    low: 30
+    medium: 60
+    high: 80
+    critical: 81
+  weights:
+    motion_intensity: 0.25
+    motion_repetition: 0.25
+    duration: 0.15
+    directional_movement: 0.15
+    object_interaction: 0.20
+  class_multipliers:
+    phone: 1.0
+    chit: 0.95
+    peeking: 0.85
+    supplement-passing: 0.90
+    boundary_crossing: 0.70
+    suspicious_motion: 0.50
+
+# USP 4: Cross-Camera Incident Fusion
+incident_fusion:
+  time_tolerance_seconds: 3.0
+  spatial_distance_threshold: 150
+  camera_sync_tolerance: 2.0
+  max_event_time_gap: 2.5
+
+# USP 5: Evidence Capsule Generation
+evidence_capsule:
+  pre_event_buffer_seconds: 1.0
+  post_event_buffer_seconds: 1.0
+  save_snapshots: true
+  output_dir: "outputs/capsules"
+
+# Stage 4: Event Segmentation & Deduplication
+event_segmentation:
+  start_threshold: 0.0015             # Filter micro-twitches and camera vibration
+  start_n_frames: 2                   # Require 2 consecutive frames to confirm event start
+  end_threshold: 0.0004
+  end_m_frames: 8                     # Keep event open across pauses up to 1.6s
+  min_duration_seconds: 1.2           # Discard micro-flickers under 1.2s
+  merge_gap_seconds: 3.5              # Merge separate triggers for same student if within 3.5s
+  cooldown_seconds: 3.0               # Prevent immediate duplicate triggers for same desk
+  room_wide_threshold_percent: 40.0   # Room-wide event trigger threshold
+
+# Privacy by Design
+privacy:
+  anonymous_mode: true
+  blur_faces: false
+  prefix_track: "Track_"
+  prefix_seat: "Desk_"
+
+heatmap:
+  colormap: "COLORMAP_JET"
+  alpha: 0.02
+  output_path: "outputs/heatmap_raw.png"
+  student_heatmap_path: "outputs/heatmap_student.png"
+  annotated_frame_path: "outputs/annotated_frame.png"
+
+output:
+  timeline_json_path: "outputs/timeline.json"
+  sqlite_db_path: "outputs/events.db"
+  forensic_db_path: "outputs/forensic.db"
+
+# Stage 6: Forensic PDF Report
+report:
+  enabled: true
+  output_path: "outputs/forensic_report.pdf"
+  include_capsule_images: true     # embed before/during/after snapshots per incident
+  include_heatmaps: true           # include heatmap appendix page
+  max_capsules_per_incident: 3     # top-N highest-risk desk image trios per incident page

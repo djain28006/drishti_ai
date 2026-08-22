@@ -1,0 +1,201 @@
+================================================================================
+DRISHTI AI — AI-POWERED EXAMINATION VIDEO FORENSICS PLATFORM
+COMPREHENSIVE PROJECT SPECIFICATION & CONTEXT DOCUMENT
+================================================================================
+
+1. PROJECT IDENTITY & PURPOSE
+--------------------------------------------------------------------------------
+- Project Name: Drishti AI
+- Repository: https://github.com/djain28006/drishti_ai (Branch: main)
+- Hackathon Track: Problem Statement #2 — Offline Video Segmentation and ROI Detection Using Motion Estimation.
+- Core Value Proposition: "We don't just find motion. We convert hours of examination CCTV into ranked, explainable, cross-camera evidence."
+- Target Users: Academic integrity review panels, invigilators, disciplinary committees, exam hall forensic investigators.
+- Deployment Mode: 100% Offline-First (zero cloud dependencies, local inference on CPU/GPU, local SQLite database, local web dashboard).
+
+2. CORE FORENSIC PHILOSOPHY & TERMINOLOGY RULES
+--------------------------------------------------------------------------------
+- NON-ACCUSATORY TONE: The system NEVER labels a student as "guilty", "cheater", or "cheating".
+- MANDATORY APPROVED TERMS:
+  * "Potentially Relevant Event" / "High-Risk Event"
+  * "Anomalous Activity" / "Behavioral Deviation"
+  * "Investigator Review Required"
+  * "Confidence Score" / "Risk Index (0-100)"
+  * "Desk Dossier" / "Seating Zone Profile"
+- PRIVACY BY DESIGN:
+  * No facial recognition or biometric tracking.
+  * Students and seating desks are referenced by anonymous, spatial IDs:
+    - "Track_001 (Desk S1)"
+    - "Row 1 (Back) -- Center-Left Desk"
+    - "Row 2 (Middle) -- Right Desk"
+
+3. HIGH-LEVEL ARCHITECTURE (DECOUPLED 7-STAGE PIPELINE)
+--------------------------------------------------------------------------------
+Stage 0: Video Ingestion & Sampling (`stages/stage_0_ingestion.py`)
+  - Reads raw examination hall CCTV footage (MP4, AVI, MOV).
+  - Dynamically resamples to target FPS (e.g. 5 FPS) for optimal CPU throughput.
+
+Stage 1: Preprocessing & Lighting Normalization (`stages/stage_1_preprocess.py`)
+  - Applies CLAHE (Contrast Limited Adaptive Histogram Equalization).
+  - Normalizes lighting fluctuations, shadow shifts, and fluorescent flicker.
+  - Standardizes frames to 640x480.
+
+Stage 1.5: One-Time Keyframe Zone Calibration (`stages/stage_1_5_zone_calibration.py`)
+  - Automatically identifies and locks all student desk polygons without manual annotation.
+  - Fast Multi-Pass Keyframe Hierarchy:
+    1. SAHI small-tile (192px) sliced inference.
+    2. 2x2 grid quadrant 2x upscaling pass.
+    3. Multi-frame centroid stability aggregation across primary keyframes.
+    4. Early Convergence: Locks the ZoneMap in ~15s (85% speedup over naive scanning).
+    5. Spatial Seating Map: Automatically maps pixel coords to human-readable physical descriptions (e.g. "Row 2 (Middle) -- Center-Right Desk").
+
+Stage 2A: Per-Zone MOG2 Motion Estimation (`stages/stage_2a_motion.py`)
+  - Runs OpenCV MOG2 background subtractor strictly inside each calibrated desk polygon.
+  - Computes per-desk motion density and baseline z-score deviations.
+  - Tracks inter-desk boundary crossings.
+
+Stage 2B: Motion-Gated ROI Object Detection (`stages/stage_2b_object.py`)
+  - Custom YOLOv8 model (`best (2).pt`).
+  - Evaluates classes: 'peeking', 'phone', 'chit', 'supplement-passing', 'hand', 'person'.
+  - Motion-gated: only runs object inference when motion density exceeds noise threshold.
+
+Stage 3: Tracking & Temporal Hysteresis Fusion (`stages/stage_3_tracking_fusion.py`)
+  - Permanent desk-anchored tracking (`track_id == zone_id`).
+  - Spatial foot-point assignment to desk polygons.
+  - Hysteresis filter prevents identity switches across brief occlusions.
+
+Stage 4: Event Segmentation & Deduplication (`stages/stage_4_event_segmentation.py`)
+  - Temporal Coalescing (`merge_gap_seconds: 3.5s`): merges intermittent movement triggers for the same desk into a single continuous incident.
+  - Per-Zone Cooldown (`cooldown_seconds: 3.0s`): eliminates duplicate/repeated events per second.
+  - Room-Wide Synchronized Coalescing: groups simultaneous 3+ desk elevations into unified room events.
+  - Renders browser-playable H.264 MP4 clips with bounding highlights, floating student badges, and top HUD banner.
+
+Stage 5: Output Synthesis, Evidence Capsules & Database (`stages/stage_5_output.py`)
+  - Triggers cross-camera incident fusion.
+  - Synthesizes Evidence Capsules with Before/During/After snapshots.
+  - Populates `outputs/forensic.db` and structured JSON logs.
+  - Generates global optical motion and student suspicion heatmaps.
+
+4. SPECIALIZED FORENSIC PACKAGES & 16 USPs
+--------------------------------------------------------------------------------
+1. `baseline/` (`adaptive_baseline.py`):
+   - Learns normal baseline behavior (writing, brief posture adjustments) dynamically.
+   - Computes dynamic moving mean, variance, and Z-score anomaly signals.
+
+2. `temporal/` (`behavioral_sequence.py`):
+   - Multi-frame sequence tracker modeling motion bursts, repetition cycles, and boundary reach.
+
+3. `risk_engine/` (`risk_scorer.py`):
+   - Transparent, explainable 0-100 Risk Scoring Engine.
+   - Exact mathematical factor attribution:
+     * Motion Intensity (+0 to +25)
+     * Motion Repetition (+0 to +25)
+     * Duration Persistence (+0 to +15)
+     * Boundary / Directional Movement (+0 to +15)
+     * Prohibited Object Interaction (+0 to +20)
+     * Cross-Camera Corroboration (+0 to +10)
+   - Tiers: LOW (0-30), MEDIUM (31-60), HIGH (61-80), CRITICAL (81-100).
+
+4. `incident_fusion/` (`incident_builder.py`):
+   - Fuses multi-camera and correlated temporal triggers into unified multi-view Incidents.
+
+5. `evidence/` (`capsule_generator.py`):
+   - Generates self-contained Evidence Capsules for every incident:
+     * Pre-Event Snapshot (-1.0s)
+     * During-Event Snapshot (peak anomaly)
+     * Post-Event Snapshot (+1.0s)
+     * Local Desk ROI Crop & Heatmap
+     * H.264 Annotated Video Clip
+     * JSON Metadata & Factor Breakdown
+
+6. `search/` (`nl_query_parser.py`):
+   - Sub-millisecond Natural-Language Video Search parser.
+   - Understands queries like:
+     * "Show all high-risk events"
+     * "Show peeking events"
+     * "Show events involving mobile phone"
+     * "Show repeated movement events"
+     * "risk above 70"
+     * "Camera 2" / "Desk 5"
+
+7. `db/` (`forensic_db.py`):
+   - SQLite relational database with tables:
+     * `incidents` (Prioritized incident queue)
+     * `events` (Segmented event intervals)
+     * `evidence_capsules` (Full capsule references & factor breakdown)
+     * `audit_logs` (Forensic chain-of-custody logging)
+
+8. `api/pdf_gen.py`:
+   - Generates official, publication-ready PDF Forensic Evidence Reports and individual Evidence Capsule PDFs.
+
+5. USER INTERFACE & WEB CONSOLE (`web/` & `api/server.py`)
+--------------------------------------------------------------------------------
+- Dark cyber forensic investigation workspace built with Vanilla HTML/CSS/JS (no heavy framework bloat).
+- Navigation Views:
+  * Overview & Evidence Reduction Funnel (KPI telemetry: Raw Motion -> Filtered -> Anomalies -> Fused Incidents -> Priority Capsules).
+  * Priority Queue (Ranked cards by Risk Index with 1-click Evidence Capsule modal).
+  * Natural-Language Forensic Search Bar with clickable quick tags.
+  * Multi-Camera Synchronized Interactive Timeline with pre/post-event seek buffers.
+  * Hall & Desk Heatmaps (Optical Motion vs Baseline Suspicion).
+  * Spatial Seating Map & Desk Dossiers.
+  * Evidence Clips & 1-Click PDF Report Export.
+  * Ingest Video (Drag-and-drop upload with real-time stage progress stepper).
+
+6. DIRECTORY STRUCTURE
+--------------------------------------------------------------------------------
+c:\EXAM_CHEATING\
+├── api/
+│   ├── pdf_gen.py                 # PDF report generator (FPDF2)
+│   └── server.py                  # FastAPI web server & REST endpoints
+├── baseline/
+│   └── adaptive_baseline.py       # Dynamic baseline & Z-score tracker
+├── config/
+│   └── config.yaml                # Master configuration
+├── db/
+│   └── forensic_db.py             # SQLite database manager
+├── evidence/
+│   └── capsule_generator.py       # Evidence Capsule snapshot extractor
+├── incident_fusion/
+│   └── incident_builder.py        # Cross-camera incident clustering
+├── risk_engine/
+│   └── risk_scorer.py             # Explainable 0-100 risk scoring
+├── search/
+│   └── nl_query_parser.py         # Natural-language query search engine
+├── stages/
+│   ├── stage_0_ingestion.py       # Video reader & sampler
+│   ├── stage_1_preprocess.py      # CLAHE & standardizer
+│   ├── stage_1_5_zone_calibration.py # Fast keyframe desk calibration
+│   ├── stage_2a_motion.py         # MOG2 per-zone motion
+│   ├── stage_2b_object.py         # YOLO ROI detector
+│   ├── stage_3_tracking_fusion.py # Tracking & temporal hysteresis
+│   ├── stage_4_event_segmentation.py # Event coalescing & clip cutter
+│   └── stage_5_output.py          # Output synthesis & database populator
+├── temporal/
+│   └── behavioral_sequence.py     # Multi-frame sequence model
+├── web/
+│   ├── app.js                     # Frontend controller & search engine
+│   ├── index.html                 # Main forensic console layout
+│   └── styles.css                 # Dark cybersecurity UI design system
+├── outputs/                       # Generated artifacts (gitignored)
+│   ├── capsules/                  # Before/During/After snapshots & JSON
+│   ├── events/                    # H.264 annotated video clips
+│   ├── reports/                   # Generated PDF forensic reports
+│   ├── zones/                     # Calibrated zone_map.json & preview
+│   ├── forensic.db                # SQLite database
+│   ├── heatmap_raw.png            # Optical motion heatmap
+│   ├── heatmap_student.png        # Student suspicion heatmap
+│   └── timeline.json              # Full session timeline
+├── best.pt                    # Custom YOLO model weights
+├── main.py                        # Pipeline execution orchestrator
+├── README.md                      # Complete GitHub documentation
+├── requirements.txt               # Dependencies
+└── info.txt                       # This project context document
+
+7. HOW TO EXECUTE & RUN
+--------------------------------------------------------------------------------
+1. CLI Full Pipeline Run:
+   python main.py --clean --input test2.mp4
+
+2. Web Forensic Console:
+   python -m uvicorn api.server:app --host 0.0.0.0 --port 8000
+   Open in browser: http://localhost:8000
+================================================================================

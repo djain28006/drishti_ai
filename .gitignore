@@ -1,0 +1,66 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Outputs, Logs, Database & Temporary Files
+outputs/
+uploads/
+logs/
+reports/
+*.log
+*.sqlite3
+events.db
+*.db
+
+# Video files (raw test videos and clips)
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+
+# Large dataset directories & training artifacts
+datasets/
+cleaned_datasets/
+merged_dataset/
+custom_image/
+verification_samples/
+skipped/
+runs/
+wandb/
+
+# Model weight files (binaries)
+*.pt
+*.pth
+*.onnx
+*.engine
+*.bin
+
+# IDE and OS files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Agent & local IDE configuration
+.gemini/
+.agents/
+
+node_modules/
+
+optimized_dataset_FINAL_408MB.zip
