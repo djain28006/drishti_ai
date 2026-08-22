@@ -17,7 +17,7 @@ export default function MetadataInfoPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--border-color)' }}>
               <span style={{ color: 'var(--text-muted)' }}>Object Detection Backbone:</span>
-              <span style={{ color: '#fff' }}>YOLOv8 Nano (yolov8n.pt)</span>
+              <span style={{ color: 'var(--accent-cyan)', fontWeight: '700' }}>Custom Trained Detector (best.pt)</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--border-color)' }}>
               <span style={{ color: 'var(--text-muted)' }}>Motion Estimation Algorithm:</span>

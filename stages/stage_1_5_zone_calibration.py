@@ -366,12 +366,11 @@ def calibrate_zones_stage(
 
     import torch
     obj_cfg = config_dict.get('object_detection', {})
-    model_path = obj_cfg.get('model_path', 'yolov8n.pt')
-    if not os.path.exists(model_path):
-        for fallback in ['yolov8n.pt', 'models/yolov8n.pt', 'best.pt', 'models/best.pt']:
-            if os.path.exists(fallback):
-                model_path = fallback
-                break
+    model_path = obj_cfg.get('model_path', 'best.pt')
+    for fallback in ['best.pt', 'models/best.pt', 'yolov8n.pt', 'models/yolov8n.pt']:
+        if os.path.exists(fallback):
+            model_path = fallback
+            break
 
     device_req = str(obj_cfg.get('device', 'cuda' if torch.cuda.is_available() else 'cpu')).strip()
     if device_req.lower() == 'auto' or device_req.lower().startswith('cuda'):

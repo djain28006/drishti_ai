@@ -72,7 +72,7 @@ motion_detection:
     threshold_percentage: 70
 
 object_detection:
-  model_path: "yolov8n.pt"
+  model_path: "best.pt"
   confidence_threshold: 0.08
   device: "cuda"              # cuda | cpu | auto
   classes_of_interest: ["person", "phone", "cell phone", "mobile phone", "chit", "hand", "peeking", "supplement-passing", "laptop", "book"]

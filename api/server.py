@@ -683,8 +683,8 @@ def _get_or_create_annotated_clip(source_path: Path, event_id: str) -> Path:
         return source_path
 
     from ultralytics import YOLO
-    model_path = "yolov8n.pt"
-    for fallback in ['yolov8n.pt', 'models/yolov8n.pt', 'best.pt', 'models/best.pt']:
+    model_path = "best.pt"
+    for fallback in ['best.pt', 'models/best.pt', 'yolov8n.pt', 'models/yolov8n.pt']:
         if os.path.exists(fallback):
             model_path = fallback
             break

@@ -436,8 +436,8 @@ def cut_unified_annotated_clip(
         try:
             if 'yolo_inst' not in locals():
                 from ultralytics import YOLO
-                m_path = "yolov8n.pt"
-                for fallback in ['yolov8n.pt', 'models/yolov8n.pt', 'best.pt', 'models/best.pt']:
+                m_path = "best.pt"
+                for fallback in ['best.pt', 'models/best.pt', 'yolov8n.pt', 'models/yolov8n.pt']:
                     if os.path.exists(fallback):
                         m_path = fallback
                         break
