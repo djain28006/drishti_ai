@@ -64,7 +64,7 @@ export default function ProcessingPage({ jobId: initialJobId, apiBase = '', onCo
               setIsCompleted(true);
               if (onComplete) onComplete();
               setTimeout(() => {
-                setCurrentPage('artifacts');
+                setCurrentPage('forensics');
               }, 1200);
             }
           }
@@ -102,7 +102,7 @@ export default function ProcessingPage({ jobId: initialJobId, apiBase = '', onCo
           setLogs(prev => [...prev, '[SUCCESS] Pipeline completed successfully. 12 ROI zones calibrated.']);
           if (onComplete) onComplete();
           setTimeout(() => {
-            setCurrentPage('artifacts');
+            setCurrentPage('forensics');
           }, 1500);
         }
       }, 150);
@@ -215,9 +215,9 @@ export default function ProcessingPage({ jobId: initialJobId, apiBase = '', onCo
           <button
             className="btn-new-investigation"
             style={{ marginTop: '16px', width: '100%' }}
-            onClick={() => setCurrentPage('artifacts')}
+            onClick={() => setCurrentPage('forensics')}
           >
-            View Investigation Telemetry & Artifacts <ArrowRight size={14} />
+            View Video Forensics Analysis & Telemetry <ArrowRight size={14} />
           </button>
         )}
 

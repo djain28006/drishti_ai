@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Search, Bell, Settings, HelpCircle, User, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Search, Bell, Settings, HelpCircle, User, AlertTriangle, LogOut, Shield } from 'lucide-react';
 
-export default function Topbar({ currentPage, setCurrentPage, onSearch }) {
+export default function Topbar({ currentPage, setCurrentPage, onSearch, user, onLogout }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -12,6 +12,11 @@ export default function Topbar({ currentPage, setCurrentPage, onSearch }) {
       if (onSearch) onSearch(searchQuery);
     }
   };
+
+  const displayName = user?.displayName || user?.username || user?.email?.split('@')[0] || 'Forensic Officer';
+  const displayEmail = user?.email || 'officer@trinetra.ai';
+  const displayRole = user?.role || 'Senior Forensic Lead';
+  const photoURL = user?.photoURL;
 
   return (
     <header className="topbar">
@@ -106,38 +111,120 @@ export default function Topbar({ currentPage, setCurrentPage, onSearch }) {
           <HelpCircle size={18} />
         </button>
 
-        {/* User Profile Avatar */}
+        {/* User Profile Avatar Section */}
         <div style={{ position: 'relative' }}>
           <div 
             className="user-avatar" 
-            title="Unit 04 Lead Investigator" 
-            style={{ cursor: 'pointer' }}
+            title={displayName} 
+            style={{ 
+              cursor: 'pointer',
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: photoURL ? '2px solid var(--accent-cyan)' : '1px solid var(--border-cyan)'
+            }}
             onClick={() => {
               setShowProfile(!showProfile);
               setShowNotifications(false);
             }}
           >
-            <User size={18} />
+            {photoURL ? (
+              <img 
+                src={photoURL} 
+                alt={displayName} 
+                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} 
+              />
+            ) : (
+              <User size={18} />
+            )}
           </div>
 
+          {/* Profile & Logout Dropdown */}
           {showProfile && (
             <div style={{
               position: 'absolute',
-              top: '42px',
+              top: '46px',
               right: '0',
-              width: '240px',
+              width: '260px',
               background: 'var(--bg-card)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '8px',
-              padding: '14px',
-              boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
+              border: '1px solid var(--border-cyan)',
+              borderRadius: '12px',
+              padding: '16px',
+              boxShadow: '0 10px 40px rgba(0,242,255,0.2)',
               zIndex: 100
             }}>
-              <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff' }}>Unit 04 Lead Investigator</div>
-              <div style={{ fontSize: '11px', color: 'var(--accent-cyan)', fontFamily: 'var(--font-mono)', marginBottom: '8px' }}>Role: Chief Forensic Analyst</div>
-              <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', borderTop: '1px solid var(--border-color)', paddingTop: '8px' }}>
-                Vault Clearance Level 5 • Active Ops
+              {/* User Avatar & Info */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+                <div style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  background: 'rgba(0, 242, 255, 0.15)',
+                  border: '1px solid var(--border-cyan)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--accent-cyan)'
+                }}>
+                  {photoURL ? (
+                    <img src={photoURL} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <User size={22} />
+                  )}
+                </div>
+                <div style={{ overflow: 'hidden' }}>
+                  <div style={{ fontSize: '13px', fontWeight: '800', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {displayName}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {displayEmail}
+                  </div>
+                </div>
               </div>
+
+              <div style={{ 
+                fontSize: '11px', 
+                color: 'var(--accent-cyan)', 
+                fontFamily: 'var(--font-mono)', 
+                backgroundColor: 'rgba(0, 242, 255, 0.08)',
+                padding: '6px 10px',
+                borderRadius: '6px',
+                marginBottom: '14px',
+                border: '1px solid rgba(0, 242, 255, 0.2)'
+              }}>
+                Role: {displayRole}
+              </div>
+
+              {/* Logout Button */}
+              {onLogout && (
+                <button
+                  onClick={() => {
+                    setShowProfile(false);
+                    onLogout();
+                  }}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    padding: '10px',
+                    background: 'rgba(255, 59, 92, 0.15)',
+                    border: '1px solid rgba(255, 59, 92, 0.4)',
+                    color: 'var(--status-critical)',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <LogOut size={14} />
+                  <span>Log Out to Landing Page</span>
+                </button>
+              )}
             </div>
           )}
         </div>

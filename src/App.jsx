@@ -21,13 +21,46 @@ import IngestVideoPage from './pages/IngestVideoPage';
 import ProcessingPage from './pages/ProcessingPage';
 import MetadataInfoPage from './pages/MetadataInfoPage';
 
+import { auth, onAuthStateChanged, logoutUser, fetchUserProfileFromFirestore } from './firebase';
 import './styles/theme.css';
 
 const API_BASE = window.location.origin;
+const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 
 export default function App() {
-  const [viewMode, setViewMode] = useState('landing'); // 'landing' | 'login' | 'dashboard'
-  const [user, setUser] = useState(null);
+  const [viewMode, setViewMode] = useState(() => {
+    // Check if 24-hour active session exists in localStorage
+    try {
+      const raw = localStorage.getItem('trinetra_auth_session');
+      if (raw) {
+        const sessionObj = JSON.parse(raw);
+        if (sessionObj && sessionObj.timestamp && sessionObj.user) {
+          const elapsed = Date.now() - sessionObj.timestamp;
+          if (elapsed < TWENTY_FOUR_HOURS_MS) {
+            return 'dashboard';
+          }
+        }
+      }
+    } catch (e) {}
+    return 'landing';
+  });
+
+  const [user, setUser] = useState(() => {
+    try {
+      const raw = localStorage.getItem('trinetra_auth_session');
+      if (raw) {
+        const sessionObj = JSON.parse(raw);
+        if (sessionObj && sessionObj.timestamp && sessionObj.user) {
+          const elapsed = Date.now() - sessionObj.timestamp;
+          if (elapsed < TWENTY_FOUR_HOURS_MS) {
+            return sessionObj.user;
+          }
+        }
+      }
+    } catch (e) {}
+    return null;
+  });
+
   const [currentPage, setCurrentPage] = useState('artifacts');
   const [currentData, setCurrentData] = useState({
     video_name: 'Examination_Surveillance.mp4',
@@ -76,10 +109,41 @@ export default function App() {
     }
   };
 
+  // Helper to persist user session for 24 hours
+  const save24HourSession = (userData) => {
+    setUser(userData);
+    try {
+      localStorage.setItem('trinetra_auth_session', JSON.stringify({
+        user: userData,
+        timestamp: Date.now()
+      }));
+    } catch (e) {
+      console.warn("Session storage error:", e);
+    }
+  };
+
   useEffect(() => {
     loadCurrentAnalysis();
     loadIncidents();
     loadFunnel();
+
+    // Firebase Auth State Listener
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const firestoreProfile = await fetchUserProfileFromFirestore(firebaseUser.uid);
+        const userData = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName || firestoreProfile?.displayName || firebaseUser.email.split('@')[0],
+          username: firebaseUser.displayName || firestoreProfile?.displayName || firebaseUser.email.split('@')[0],
+          photoURL: firebaseUser.photoURL || firestoreProfile?.photoURL || null,
+          role: firestoreProfile?.role || 'Senior Forensic Lead'
+        };
+        save24HourSession(userData);
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const openCapsuleModal = async (incidentId) => {
@@ -105,6 +169,15 @@ export default function App() {
     i => i.risk_level === 'HIGH' || i.risk_level === 'CRITICAL'
   ).length;
 
+  const handleLogout = async () => {
+    try {
+      localStorage.removeItem('trinetra_auth_session');
+    } catch (e) {}
+    await logoutUser();
+    setUser(null);
+    setViewMode('landing');
+  };
+
   if (viewMode === 'landing') {
     return (
       <LandingPage 
@@ -117,10 +190,9 @@ export default function App() {
     return (
       <LoginPage 
         onLoginSuccess={(userData) => {
-          setUser(userData);
+          save24HourSession(userData);
           setViewMode('dashboard');
         }}
-        onBackToLanding={() => setViewMode('landing')}
       />
     );
   }
@@ -141,15 +213,17 @@ export default function App() {
             setSearchQuery(query);
             setCurrentPage('search');
           }}
+          user={user}
+          onLogout={handleLogout}
         />
 
         <main style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', display: 'flex', flexDirection: 'column' }}>
           {currentPage === 'artifacts' && (
-            <ArtifactsAnalyticsPage />
+            <ArtifactsAnalyticsPage currentData={currentData} />
           )}
 
           {currentPage === 'spatial' && (
-            <SpatialPage onSelectIncident={openCapsuleModal} />
+            <SpatialPage onSelectIncident={openCapsuleModal} currentData={currentData} />
           )}
 
           {currentPage === 'forensics' && (
@@ -160,7 +234,7 @@ export default function App() {
           )}
 
           {currentPage === 'audit' && (
-            <AuditLogsPage />
+            <AuditLogsPage user={user} />
           )}
 
           {currentPage === 'dashboard' && (

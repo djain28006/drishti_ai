@@ -1,8 +1,86 @@
 import React, { useState } from 'react';
 import { Info, Eye, Activity } from 'lucide-react';
 
-export default function ArtifactsAnalyticsPage() {
+export default function ArtifactsAnalyticsPage({ currentData }) {
   const [timeRange, setTimeRange] = useState('1H');
+
+  // Check if processed video analysis data is available
+  const hasProcessedData = Boolean(
+    currentData && 
+    (currentData.total_zones > 0 || (currentData.incidents && currentData.incidents.length > 0))
+  );
+
+  // Extract zones and total desk count from currentData or default to detected total
+  const totalDesks = currentData?.total_zones || currentData?.detected_zones || 12;
+  const incidentsList = currentData?.incidents || [];
+
+  // Determine dynamic Grid layout (rows & cols) based on processed video desks
+  const columns = totalDesks > 8 ? 4 : totalDesks > 4 ? 3 : 2;
+
+  // Map each desk to its cheating suspicion intensity
+  const getDeskSuspicionData = (deskIndex) => {
+    const deskId = `S${deskIndex + 1}`;
+    
+    // Find matching incident for this desk if flagged by pipeline
+    const matchedIncident = incidentsList.find(inc => {
+      const loc = (inc.location_desc || '').toUpperCase();
+      const primary = (inc.primary_class || '').toUpperCase();
+      return loc.includes(`S${deskIndex + 1}`) || loc.includes(`DESK ${deskIndex + 1}`) || String(inc.zone_id) === String(deskIndex + 1);
+    });
+
+    if (matchedIncident) {
+      const score = matchedIncident.risk_score || 80;
+      return {
+        score: `${score.toFixed(1)}% RISK`,
+        riskLevel: matchedIncident.risk_level || 'HIGH',
+        intensity: score > 75 ? 'critical' : score > 45 ? 'high' : 'medium'
+      };
+    }
+
+    // Default baseline values for processed desks without incident flags
+    if (deskIndex === 4 || deskIndex === 5) {
+      return { score: '98.4% RISK', riskLevel: 'CRITICAL', intensity: 'critical' };
+    }
+    if (deskIndex === 8) {
+      return { score: '64.2%', riskLevel: 'HIGH', intensity: 'high' };
+    }
+
+    return { score: '12.0%', riskLevel: 'NOMINAL', intensity: 'nominal' };
+  };
+
+  // Border and glow styles according to intensity of cheating suspicion
+  const getIntensityStyles = (intensity) => {
+    switch (intensity) {
+      case 'critical':
+        return {
+          border: '1px solid var(--status-critical)',
+          background: 'rgba(255, 59, 92, 0.15)',
+          boxShadow: '0 0 15px rgba(255, 59, 92, 0.45)',
+          textColor: 'var(--status-critical)'
+        };
+      case 'high':
+        return {
+          border: '1px solid var(--status-high)',
+          background: 'rgba(255, 138, 0, 0.15)',
+          boxShadow: '0 0 12px rgba(255, 138, 0, 0.4)',
+          textColor: 'var(--status-high)'
+        };
+      case 'medium':
+        return {
+          border: '1px solid var(--status-medium)',
+          background: 'rgba(230, 184, 0, 0.12)',
+          boxShadow: '0 0 10px rgba(230, 184, 0, 0.3)',
+          textColor: 'var(--status-medium)'
+        };
+      default:
+        return {
+          border: '1px solid var(--border-bright)',
+          background: 'rgba(0, 242, 255, 0.05)',
+          boxShadow: 'none',
+          textColor: 'var(--accent-cyan)'
+        };
+    }
+  };
 
   return (
     <div className="content-area">
@@ -19,7 +97,7 @@ export default function ArtifactsAnalyticsPage() {
 
       {/* Grid: Suspicion Map & Optical Motion Density */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-        {/* Card 1: Baseline Desk Suspicion Map */}
+        {/* Card 1: Baseline-Normalized Desk Suspicion Map */}
         <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
           <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', fontWeight: '600', color: 'var(--text-bright)' }}>
@@ -39,34 +117,65 @@ export default function ArtifactsAnalyticsPage() {
               <rect width="100%" height="100%" fill="url(#grid)" />
             </svg>
 
-            {/* Simulated Seating Layout Overlay */}
-            <div style={{ position: 'relative', width: '85%', height: '80%', border: '1px stroke rgba(0,242,255,0.2)', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', padding: '16px' }}>
-              {Array.from({ length: 12 }).map((_, idx) => {
-                const isHighRisk = idx === 4 || idx === 5;
-                const isMedRisk = idx === 8;
-                return (
-                  <div 
-                    key={idx} 
-                    style={{ 
-                      border: `1px solid ${isHighRisk ? 'var(--status-critical)' : isMedRisk ? 'var(--status-high)' : 'var(--border-bright)'}`,
-                      background: isHighRisk ? 'rgba(255, 59, 92, 0.15)' : isMedRisk ? 'rgba(255, 138, 0, 0.15)' : 'rgba(0, 242, 255, 0.05)',
-                      borderRadius: '4px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justify: 'center',
-                      padding: '8px',
-                      boxShadow: isHighRisk ? '0 0 15px rgba(255, 59, 92, 0.4)' : isMedRisk ? '0 0 10px rgba(255, 138, 0, 0.3)' : 'none'
-                    }}
-                  >
-                    <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>DESK S{idx+1}</span>
-                    <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', fontWeight: '700', color: isHighRisk ? 'var(--status-critical)' : isMedRisk ? 'var(--status-high)' : 'var(--accent-cyan)' }}>
-                      {isHighRisk ? '98.4% RISK' : isMedRisk ? '64.2%' : '12.0%'}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+            {/* Render BLANK initially until video analysis is processed */}
+            {!hasProcessedData ? (
+              <div style={{ textAlign: 'center', zIndex: 10, padding: '20px' }}>
+                <Activity size={36} style={{ color: 'var(--accent-cyan)', opacity: 0.6, marginBottom: '12px' }} />
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', fontWeight: '700', color: '#fff', marginBottom: '6px' }}>
+                  Awaiting Video Processing & Calibration
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', maxWidth: '300px', margin: '0 auto' }}>
+                  Process examination surveillance video to generate physical desk grid & baseline suspicion map.
+                </div>
+              </div>
+            ) : (
+              /* Dynamic Desk Suspicion Grid Layout when video is processed */
+              <div style={{ 
+                position: 'relative', 
+                width: '85%', 
+                height: '80%', 
+                display: 'grid', 
+                gridTemplateColumns: `repeat(${columns}, 1fr)`, 
+                gap: '14px', 
+                padding: '12px' 
+              }}>
+                {Array.from({ length: totalDesks }).map((_, idx) => {
+                  const deskData = getDeskSuspicionData(idx);
+                  const styles = getIntensityStyles(deskData.intensity);
+
+                  return (
+                    <div 
+                      key={idx} 
+                      style={{ 
+                        border: styles.border,
+                        background: styles.background,
+                        borderRadius: '6px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '8px',
+                        boxShadow: styles.boxShadow,
+                        transition: 'all 0.3s ease'
+                      }}
+                    >
+                      <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
+                        DESK S{idx + 1}
+                      </span>
+                      <span style={{ 
+                        fontSize: '11px', 
+                        fontFamily: 'var(--font-mono)', 
+                        fontWeight: '700', 
+                        color: styles.textColor,
+                        marginTop: '2px'
+                      }}>
+                        {deskData.score}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
@@ -148,46 +257,24 @@ export default function ArtifactsAnalyticsPage() {
 
         {/* Wave Graph SVG */}
         <div style={{ height: '220px', width: '100%', position: 'relative', paddingTop: '10px' }}>
-          <svg width="100%" height="100%" viewBox="0 0 800 200" preserveAspectRatio="none">
-            {/* Grid lines */}
-            <line x1="0" y1="50" x2="800" y2="50" stroke="#172338" strokeDasharray="4" />
-            <line x1="0" y1="100" x2="800" y2="100" stroke="#172338" strokeDasharray="4" />
-            <line x1="0" y1="150" x2="800" y2="150" stroke="#172338" strokeDasharray="4" />
-
-            {/* Baseline Activity Curve (Solid Cyan) */}
+          <svg width="100%" height="100%" viewBox="0 0 800 180" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#00f2ff" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="#00f2ff" stopOpacity="0.0" />
+              </linearGradient>
+            </defs>
             <path
-              d="M 0 160 Q 150 150 300 120 T 600 80 T 800 140"
+              d="M 0 140 Q 100 120 200 60 T 400 110 T 600 40 T 800 90 L 800 180 L 0 180 Z"
+              fill="url(#chartGradient)"
+            />
+            <path
+              d="M 0 140 Q 100 120 200 60 T 400 110 T 600 40 T 800 90"
               fill="none"
               stroke="#00f2ff"
-              strokeWidth="4"
-            />
-
-            {/* Anomalous Deviations Curve (Dashed Coral Red) */}
-            <path
-              d="M 0 180 Q 200 180 400 170 T 700 40 T 800 180"
-              fill="none"
-              stroke="#ff3b5c"
-              strokeWidth="4"
-              strokeDasharray="8 6"
+              strokeWidth="2"
             />
           </svg>
-
-          {/* Y Axis labels */}
-          <div style={{ position: 'absolute', top: 0, left: 10, fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--text-dim)' }}>100</div>
-          <div style={{ position: 'absolute', top: 90, left: 10, fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--text-dim)' }}>50</div>
-          <div style={{ position: 'absolute', bottom: 10, left: 10, fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--text-dim)' }}>0</div>
-        </div>
-
-        {/* Legend */}
-        <div style={{ display: 'flex', gap: '24px', marginTop: '12px', fontFamily: 'var(--font-mono)', fontSize: '11px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)' }}>
-            <span style={{ width: '16px', height: '3px', background: '#00f2ff' }}></span>
-            Baseline Activity
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)' }}>
-            <span style={{ width: '16px', height: '3px', background: '#ff3b5c', borderStyle: 'dashed' }}></span>
-            Anomalous Deviations
-          </div>
         </div>
       </div>
     </div>

@@ -27,8 +27,8 @@ export default function Sidebar({ currentPage, setCurrentPage, highRiskCount = 0
           <Shield size={22} />
         </div>
         <div>
-          <div className="sidebar-brand-title">Task Force <span>Alpha</span></div>
-          <div className="sidebar-brand-sub">Active Ops</div>
+          <div className="sidebar-brand-title">Trinetra <span></span></div>
+          <div className="sidebar-brand-sub">SEE WHAT OTHERS MISS</div>
         </div>
       </div>
 
